@@ -5,7 +5,10 @@ import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.shareit.request.ItemRequest;
 import ru.yandex.practicum.shareit.user.User;
 
-@Data
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

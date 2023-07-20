@@ -1,13 +1,12 @@
 package ru.yandex.practicum.shareit.user.service;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.shareit.user.User;
 import ru.yandex.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
-import java.util.Optional;
 
-@Service
+@Component
 public interface UserService {
 
     List<User> getAll();

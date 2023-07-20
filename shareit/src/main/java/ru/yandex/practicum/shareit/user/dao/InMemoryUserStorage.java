@@ -8,8 +8,6 @@ import ru.yandex.practicum.shareit.user.User;
 import java.util.*;
 
 @Repository
-@Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)

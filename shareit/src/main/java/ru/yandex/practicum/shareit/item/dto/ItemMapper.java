@@ -2,7 +2,6 @@ package ru.yandex.practicum.shareit.item.dto;
 
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.shareit.item.Item;
-
 @Component
 public class ItemMapper {
     public ItemDto toItemDto(Item item) {

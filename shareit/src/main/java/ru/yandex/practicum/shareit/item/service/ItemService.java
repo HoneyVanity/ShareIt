@@ -1,11 +1,11 @@
 package ru.yandex.practicum.shareit.item.service;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.shareit.item.dto.ItemDto;
 
 import java.util.List;
 
-@Service
+@Component
 public interface ItemService {
     List<ItemDto> searchByOwnerId(Long userId);
 

@@ -6,7 +6,10 @@ import ru.yandex.practicum.shareit.user.User;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

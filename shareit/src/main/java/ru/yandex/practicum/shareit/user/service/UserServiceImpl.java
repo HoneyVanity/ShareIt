@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
                         () -> new FieldValidationException("email", "no email"));
         if (!dto.getEmail().isBlank() &&
                 checkIfEmailValid(dto.getEmail())) {
-            checkIfEmailHasDuplicates(dto.getEmail());
+            checkIfEmailHasDuplicates(dto.getEmail()); //@Email?
         } else {
             throw new FieldValidationException("email", "invalid email");
         }

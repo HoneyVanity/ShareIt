@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Repository
-@Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -44,7 +42,7 @@ public class InMemoryItemStorage implements ItemDao {
         return items.values()
                 .stream()
                 .filter(i -> i.getDescription().toLowerCase().contains(text.toLowerCase()) &&
-                        i.isAvailable())
+                        i.isAvailable() || i.getName().contains(text))
                 .collect(Collectors.toList());
     }
 

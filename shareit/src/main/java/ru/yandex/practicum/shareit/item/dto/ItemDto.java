@@ -1,7 +1,11 @@
 package ru.yandex.practicum.shareit.item.dto;
 
+import jdk.jfr.BooleanFlag;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.PositiveOrZero;
 
 @Getter
 @Builder
@@ -10,9 +14,10 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemDto {
-    Long id;
-    String name;
-    String description;
+    @PositiveOrZero Long id;
+    @NotEmpty String name;
+    @NotEmpty String description;
+    @BooleanFlag
     Boolean available;
-    Long requestId;
+    @PositiveOrZero Long requestId;
 }

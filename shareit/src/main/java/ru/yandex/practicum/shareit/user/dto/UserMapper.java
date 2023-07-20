@@ -2,6 +2,7 @@ package ru.yandex.practicum.shareit.user.dto;
 
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.shareit.user.User;
+
 @Component
 public class UserMapper {
     public User toUser(UserDto dto) {
