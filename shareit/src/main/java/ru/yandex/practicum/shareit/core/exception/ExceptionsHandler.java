@@ -52,4 +52,11 @@ public class ExceptionsHandler {
         log.error("Internal error", exception);
         return Map.of("error", exception.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> unsupportedStatusExceptionHandler(UnsupportedStatusException exception) {
+        log.error("Unsupported status of booking", exception);
+        return Map.of("error", exception.getMessage());
+    }
 }

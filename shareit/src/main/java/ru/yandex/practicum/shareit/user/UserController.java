@@ -1,7 +1,6 @@
 package ru.yandex.practicum.shareit.user;
 
 import lombok.AccessLevel;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
@@ -15,9 +14,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.shareit.user.dto.UserDto;
+import ru.yandex.practicum.shareit.user.dto.CreateUserDto;
+import ru.yandex.practicum.shareit.user.dto.UpdateUserDto;
 import ru.yandex.practicum.shareit.user.service.UserService;
 
+import javax.validation.Valid;
 import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class UserController {
 
     @GetMapping
     public List<User> getAll() {
-        return userService.getAll();
+        return userService.findAll();
     }
 
     @GetMapping("/{id}")
@@ -41,17 +42,17 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User create(@NonNull @RequestBody UserDto dto) {
+    public User create(@Valid @RequestBody CreateUserDto dto) {
         return userService.create(dto);
     }
 
     @PatchMapping("/{id}")
-    public User update(@PositiveOrZero @PathVariable long id, @NonNull @RequestBody UserDto dto) {
+    public User update(@PathVariable long id, @Valid @RequestBody UpdateUserDto dto) {
         return userService.update(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public User delete(@PositiveOrZero @PathVariable long id) {
+    public User delete(@PathVariable long id) {
         return userService.delete(id);
     }
 }
