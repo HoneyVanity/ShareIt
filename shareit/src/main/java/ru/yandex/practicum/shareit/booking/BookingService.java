@@ -12,7 +12,6 @@ import ru.yandex.practicum.shareit.item.Item;
 import ru.yandex.practicum.shareit.item.service.ItemService;
 import ru.yandex.practicum.shareit.user.User;
 import ru.yandex.practicum.shareit.user.service.UserService;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -81,6 +80,7 @@ public class BookingService {
     }
 
     public Booking create(long userId, BookingDto dto) {
+
         User booker = userService.getById(userId);
         Item item = itemService.getById(dto.getItemId(), userId);
 
@@ -100,6 +100,17 @@ public class BookingService {
         boolean isEndInPast = booking.getEnd().isBefore(LocalDateTime.now());
         boolean isEndBeforeStart = booking.getEnd().isBefore(booking.getStart());
         boolean isEndEqualsStart = booking.getEnd().isEqual(booking.getStart());
+
+      List<Booking> bookings = itemService.getAllBookings(item.getId());
+        if (!bookings.isEmpty()) {
+            boolean isNotIntersection = bookings.stream()
+                    .anyMatch(b -> booking.getStart().isBefore(b.getEnd()) ||
+                            booking.getEnd().isAfter(b.getStart()));
+
+            if (!isNotIntersection) {
+                throw new FieldValidationException("start | end", "Item already booked on these dates");
+            }
+        }
 
         if (isStartInPast ||
                 isEndInPast ||

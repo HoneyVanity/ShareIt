@@ -17,7 +17,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Table
 @Entity
 @Builder

@@ -24,9 +24,7 @@ import ru.yandex.practicum.shareit.user.User;
 import ru.yandex.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,21 +41,34 @@ public class ItemService {
     CommentRepository commentRepo;
 
     public List<Item> getByUserId(Long userId) {
-        return repo.findAllByOwnerId(userId)
+
+        List<Comment> comments = commentRepo.findAll();
+
+        List<Booking> list = bookingRepo.findAll();
+
+        List<Item> items = repo.findAllByOwnerId(userId)
                 .stream()
                 .peek(item -> {
-                    List<Booking> bookings = bookingRepo.findAllByItemIdOrderByStartAsc(item.getId());
-                    item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(bookings)));
-                    item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(bookings)));
-                    item.setComments(
-                            commentRepo.findAllByItemId(item.getId())
-                                    .stream()
-                                    .map(commentMapper::toCommentDto)
-                                    .collect(Collectors.toList())
-                    );
-
+                    if (list.stream().anyMatch(b -> b.getItem().getId().equals(item.getId()))) {
+                        item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(list.stream()
+                                .filter(b -> b.getItem().getId().equals(item.getId()))
+                                .sorted(Comparator.comparing(Booking::getStart))
+                                .collect(Collectors.toList()))
+                        ));
+                        item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(list.stream()
+                                .filter(b -> b.getItem().getId().equals(item.getId()))
+                                .sorted(Comparator.comparing(Booking::getStart)).collect(Collectors.toList()))
+                        ));
+                    }
                 })
+                .peek(item -> item.setComments(comments
+                        .stream()
+                        .filter(c -> c.getItem().getId().equals(item.getId()))
+                        .map(commentMapper::toCommentDto)
+                        .collect(Collectors.toList())))
                 .collect(Collectors.toList());
+        System.out.println(items);
+        return items;
     }
 
     public List<Item> searchByText(String text) {
@@ -133,6 +144,10 @@ public class ItemService {
                 .collect(Collectors.toList());
 
         return filteredBookings.isEmpty() ? null : filteredBookings.get(0);
+    }
+
+    public List<Booking> getAllBookings(long id) {
+        return bookingRepo.findAllByItemIdOrderByStartAsc(id);
     }
 
     private Booking getLastBooking(List<Booking> bookings) {

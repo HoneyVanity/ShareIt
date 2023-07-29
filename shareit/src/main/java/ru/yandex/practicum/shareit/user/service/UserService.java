@@ -31,7 +31,6 @@ public class UserService {
     }
 
     public User create(CreateUserDto dto) {
-        //checkIfEmailHasDuplicates(dto.getEmail());
         User user = mapper.toUser(dto);
 
         return repo.save(user);
