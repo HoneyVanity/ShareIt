@@ -25,6 +25,7 @@ import ru.yandex.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,35 +34,45 @@ import java.util.stream.Collectors;
 public class ItemService {
 
     ItemJpaRepository repo;
-    BookingRepository bookingRepo;
-    UserService userService;
     ItemMapper mapper;
+    BookingRepository bookingRepo;
     BookingMapper bookingMapper;
     CommentMapper commentMapper;
     CommentRepository commentRepo;
+    UserService userService;
 
     public List<Item> getByUserId(Long userId) {
 
-        List<Comment> comments = commentRepo.findAll();
-
-        List<Booking> list = bookingRepo.findAll();
-
-        List<Item> items = repo.findAllByOwnerId(userId)
+        Map<Long, Comment> commentsByItem = commentRepo
+                .findAllByItem_Owner_Id(userId)
                 .stream()
+                .collect(Collectors.toMap(
+                        Comment::getId, Function.identity()));
+
+        Map<Long, Booking> bookingsByItem = bookingRepo
+                .findAllByItemOwnerIdOrderByStartDesc(userId)
+                .stream()
+                .collect(Collectors.toMap(
+                        Booking::getId, Function.identity()));
+
+        List<Item> items = repo.findAllByOwnerId(userId).stream()
                 .peek(item -> {
-                    if (list.stream().anyMatch(b -> b.getItem().getId().equals(item.getId()))) {
-                        item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(list.stream()
-                                .filter(b -> b.getItem().getId().equals(item.getId()))
-                                .sorted(Comparator.comparing(Booking::getStart))
-                                .collect(Collectors.toList()))
+                    if (bookingsByItem.containsKey(item.getId())) {
+                        item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(
+                                bookingsByItem.values()
+                                        .stream()
+                                        .filter(b -> b.getItem().getId().equals(item.getId()))
+                                        .collect(Collectors.toList()))
                         ));
-                        item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(list.stream()
-                                .filter(b -> b.getItem().getId().equals(item.getId()))
-                                .sorted(Comparator.comparing(Booking::getStart)).collect(Collectors.toList()))
+                        item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(
+                                bookingsByItem.values()
+                                        .stream()
+                                        .filter(b -> b.getItem().getId().equals(item.getId()))
+                                        .collect(Collectors.toList()))
                         ));
                     }
                 })
-                .peek(item -> item.setComments(comments
+                .peek(item -> item.setComments(commentsByItem.values()
                         .stream()
                         .filter(c -> c.getItem().getId().equals(item.getId()))
                         .map(commentMapper::toCommentDto)
@@ -141,6 +152,7 @@ public class ItemService {
     private Booking getNextBooking(List<Booking> bookings) {
         List<Booking> filteredBookings = bookings.stream()
                 .filter(booking -> booking.getStart().isAfter(LocalDateTime.now()) && !booking.getStatus().equals(BookingStatus.REJECTED))
+                .sorted(Comparator.comparing(Booking::getStart))
                 .collect(Collectors.toList());
 
         return filteredBookings.isEmpty() ? null : filteredBookings.get(0);
@@ -155,6 +167,7 @@ public class ItemService {
                 .filter(booking -> booking.getEnd().isBefore(LocalDateTime.now()) ||
                         (booking.getStart().isBefore(LocalDateTime.now()) &&
                                 booking.getEnd().isAfter(LocalDateTime.now())))
+                .sorted(Comparator.comparing(Booking::getStart))
                 .collect(Collectors.toList());
 
         return filteredBookings.isEmpty() ? null : filteredBookings.get(filteredBookings.size() - 1);
