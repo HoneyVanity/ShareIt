@@ -39,3 +39,12 @@ CREATE TABLE IF NOT EXISTS comment
     FOREIGN KEY (item_id) REFERENCES item (item_id) ON DELETE CASCADE,
     FOREIGN KEY (author_id) REFERENCES users (user_id) ON DELETE CASCADE
     );
+
+CREATE TABLE IF NOT EXISTS request
+(
+    request_id  INTEGER AUTO_INCREMENT PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    created     TIMESTAMP    NOT NULL,
+    user_id     INTEGER      NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
+);

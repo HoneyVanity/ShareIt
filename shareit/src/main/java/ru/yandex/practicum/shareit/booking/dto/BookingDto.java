@@ -1,14 +1,18 @@
 package ru.yandex.practicum.shareit.booking.dto;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
-@Value
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class BookingDto {
     @NotNull(message = "ItemId is required")
-    Integer itemId;
+    Long itemId;
 
     @NotNull(message = "Start is required")
     LocalDateTime start;

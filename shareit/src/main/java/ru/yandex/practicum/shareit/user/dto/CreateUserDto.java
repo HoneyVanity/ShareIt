@@ -1,11 +1,14 @@
 package ru.yandex.practicum.shareit.user.dto;
 
-import lombok.Value;
+import lombok.*;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
-@Value
+@Getter
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateUserDto {
     @NotBlank(message = "Name is required")
     String name;

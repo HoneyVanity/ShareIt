@@ -1,10 +1,13 @@
 package ru.yandex.practicum.shareit.user.dto;
 
-import lombok.Value;
+import lombok.*;
 
 import javax.validation.constraints.Email;
 
-@Value
+@Getter
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateUserDto {
     String name;
 

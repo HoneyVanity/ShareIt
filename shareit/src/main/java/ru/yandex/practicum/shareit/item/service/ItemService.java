@@ -3,14 +3,15 @@ package ru.yandex.practicum.shareit.item.service;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.shareit.booking.Booking;
 import ru.yandex.practicum.shareit.booking.BookingMapper;
-import ru.yandex.practicum.shareit.booking.BookingRepository;
+import ru.yandex.practicum.shareit.booking.BookingJpaRepository;
 import ru.yandex.practicum.shareit.booking.BookingStatus;
 import ru.yandex.practicum.shareit.comment.Comment;
 import ru.yandex.practicum.shareit.comment.CommentMapper;
-import ru.yandex.practicum.shareit.comment.CommentRepository;
+import ru.yandex.practicum.shareit.comment.CommentJpaRepository;
 import ru.yandex.practicum.shareit.comment.dto.CommentDto;
 import ru.yandex.practicum.shareit.comment.dto.CreateCommentDto;
 import ru.yandex.practicum.shareit.core.exception.FieldValidationException;
@@ -19,12 +20,15 @@ import ru.yandex.practicum.shareit.item.Item;
 import ru.yandex.practicum.shareit.item.ItemJpaRepository;
 import ru.yandex.practicum.shareit.item.ItemMapper;
 import ru.yandex.practicum.shareit.item.dto.CreateItemDto;
+import ru.yandex.practicum.shareit.item.dto.ItemDto;
 import ru.yandex.practicum.shareit.item.dto.UpdateItemDto;
+import ru.yandex.practicum.shareit.request.RequestJpaRepository;
 import ru.yandex.practicum.shareit.user.User;
 import ru.yandex.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,54 +37,69 @@ import java.util.stream.Collectors;
 public class ItemService {
 
     ItemJpaRepository repo;
-    BookingRepository bookingRepo;
+    BookingJpaRepository bookingRepo;
     UserService userService;
     ItemMapper mapper;
     BookingMapper bookingMapper;
     CommentMapper commentMapper;
-    CommentRepository commentRepo;
+    CommentJpaRepository commentRepo;
 
-    public List<Item> getByUserId(Long userId) {
+    RequestJpaRepository requestRepo;
 
-        List<Comment> comments = commentRepo.findAll();
+    public List<ItemDto> getByUserId(Long userId, Pageable pageable) {
 
-        List<Booking> list = bookingRepo.findAll();
+        Map<Long, Comment> commentsByItem = commentRepo
+                .findAllByItem_Owner_Id(userId)
+                .stream()
+                .collect(Collectors.toMap(
+                        Comment::getId, Function.identity()));
 
-        List<Item> items = repo.findAllByOwnerId(userId)
+        Map<Long, Booking> bookingsByItem = bookingRepo
+                .findAllByItemOwnerIdOrderByStartDesc(userId, pageable)
+                .stream()
+                .collect(Collectors.toMap(
+                        Booking::getId, Function.identity()));
+
+
+        return repo.findAllByOwnerId(userId, pageable)
                 .stream()
                 .peek(item -> {
-                    if (list.stream().anyMatch(b -> b.getItem().getId().equals(item.getId()))) {
-                        item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(list.stream()
-                                .filter(b -> b.getItem().getId().equals(item.getId()))
-                                .sorted(Comparator.comparing(Booking::getStart))
-                                .collect(Collectors.toList()))
+                    if (bookingsByItem.containsKey(item.getId())) {
+                        item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(
+                                bookingsByItem.values()
+                                        .stream()
+                                        .filter(b -> b.getItem().getId().equals(item.getId()))
+                                        .collect(Collectors.toList()))
                         ));
-                        item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(list.stream()
-                                .filter(b -> b.getItem().getId().equals(item.getId()))
-                                .sorted(Comparator.comparing(Booking::getStart)).collect(Collectors.toList()))
+                        item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(
+                                bookingsByItem.values()
+                                        .stream()
+                                        .filter(b -> b.getItem().getId().equals(item.getId()))
+                                        .collect(Collectors.toList()))
                         ));
                     }
                 })
-                .peek(item -> item.setComments(comments
+                .peek(item -> item.setComments(commentsByItem.values()
                         .stream()
                         .filter(c -> c.getItem().getId().equals(item.getId()))
                         .map(commentMapper::toCommentDto)
                         .collect(Collectors.toList())))
+                .map(mapper::toItemDto)
                 .collect(Collectors.toList());
-        System.out.println(items);
-        return items;
     }
 
-    public List<Item> searchByText(String text) {
+    public List<ItemDto> searchByText(String text, Pageable pageable) {
         if (text.isBlank()) {
             return Collections.emptyList();
         }
 
-        return repo.findAllByText(text);
-
+        return repo.findAllByText(text, pageable)
+                .stream()
+                .map(mapper::toItemDto)
+                .collect(Collectors.toList());
     }
 
-    public Item getById(long id, Long userId) {
+    public ItemDto getById(long id, Long userId) {
 
         Item item = repo.findById(id).orElseThrow(() -> new NotFoundException("item", id));
 
@@ -97,19 +116,24 @@ public class ItemService {
                 .collect(Collectors.toList());
         item.setComments(comments);
 
-        return item;
+        return mapper.toItemDto(item);
     }
 
-    public Item create(Long userId, CreateItemDto dto) {
+    public ItemDto create(Long userId, CreateItemDto dto) {
 
         User user = userService.getById(userId);
         Item newItem = mapper.toItem(dto);
         newItem.setOwner(user);
 
-        return repo.save(newItem);
+        if (dto.getRequestId() != null) {
+            requestRepo.findById(dto.getRequestId()).ifPresentOrElse(newItem::setRequest, () -> {
+                throw new NotFoundException("request", dto.getRequestId());
+            });
+        }
+        return mapper.toItemDto(repo.save(newItem));
     }
 
-    public Item update(long id, Long userId, UpdateItemDto dto) {
+    public ItemDto update(long id, Long userId, UpdateItemDto dto) {
         User user = userService.getById(userId);
         Item item = repo.findById(id).orElseThrow(() -> new NotFoundException("item", id));
 
@@ -129,18 +153,19 @@ public class ItemService {
             item.setAvailable(dto.getAvailable());
         }
 
-        return repo.save(item);
+        return mapper.toItemDto(repo.save(item));
     }
 
-    public Item delete(long id) {
+    public ItemDto delete(long id) {
         Item item = repo.findById(id).orElseThrow(() -> new NotFoundException("item", id));
         repo.deleteById(id);
-        return item;
+        return mapper.toItemDto(repo.save(item));
     }
 
     private Booking getNextBooking(List<Booking> bookings) {
         List<Booking> filteredBookings = bookings.stream()
                 .filter(booking -> booking.getStart().isAfter(LocalDateTime.now()) && !booking.getStatus().equals(BookingStatus.REJECTED))
+                .sorted(Comparator.comparing(Booking::getStart))
                 .collect(Collectors.toList());
 
         return filteredBookings.isEmpty() ? null : filteredBookings.get(0);
@@ -155,6 +180,7 @@ public class ItemService {
                 .filter(booking -> booking.getEnd().isBefore(LocalDateTime.now()) ||
                         (booking.getStart().isBefore(LocalDateTime.now()) &&
                                 booking.getEnd().isAfter(LocalDateTime.now())))
+                .sorted(Comparator.comparing(Booking::getStart))
                 .collect(Collectors.toList());
 
         return filteredBookings.isEmpty() ? null : filteredBookings.get(filteredBookings.size() - 1);
@@ -164,7 +190,7 @@ public class ItemService {
         Item item = repo.findById(id).orElseThrow(() -> new NotFoundException("item", id));
         User user = userService.getById(userId);
 
-        List<Booking> bookings = bookingRepo.findAllByBookerIdAndEndBeforeOrderByStartDesc(userId, LocalDateTime.now());
+        List<Booking> bookings = bookingRepo.findAllByBookerIdAndEndBeforeOrderByStartDesc(userId, LocalDateTime.now(), Pageable.unpaged());
 
         if (bookings.isEmpty()) {
             throw new FieldValidationException("userId", "User didn't book this item");

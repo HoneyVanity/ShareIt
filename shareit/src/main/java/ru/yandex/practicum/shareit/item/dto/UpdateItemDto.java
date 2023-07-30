@@ -1,8 +1,11 @@
 package ru.yandex.practicum.shareit.item.dto;
 
-import lombok.Value;
+import lombok.*;
 
-@Value
+@Getter
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateItemDto {
     String name;
     String description;

@@ -8,7 +8,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.shareit.comment.dto.CommentDto;
 import ru.yandex.practicum.shareit.comment.dto.CreateCommentDto;
+import ru.yandex.practicum.shareit.core.pagination.PaginationMapper;
 import ru.yandex.practicum.shareit.item.dto.CreateItemDto;
+import ru.yandex.practicum.shareit.item.dto.ItemDto;
 import ru.yandex.practicum.shareit.item.dto.UpdateItemDto;
 import ru.yandex.practicum.shareit.item.service.ItemService;
 
@@ -25,32 +27,36 @@ public class ItemController {
     ItemService service;
 
     @GetMapping
-    public List<Item> getByUserId(@RequestHeader(required = false, name = USER_ID_HEADER) Long userId) {
-        return service.getByUserId(userId);
+    public List<ItemDto> getByUserId(@RequestHeader(required = true, name = USER_ID_HEADER) Long userId,
+                                     @RequestParam(required = false) Integer from,
+                                     @RequestParam(required = false) Integer size) {
+        return service.getByUserId(userId, PaginationMapper.toPageable(from, size));
     }
 
     @GetMapping("/search")
-    public List<Item> search(
-            @RequestParam(required = false) String text) {
-        return service.searchByText(text);
+    public List<ItemDto> search(
+            @RequestParam(required = false) String text,
+            @RequestParam(required = false) Integer from,
+            @RequestParam(required = false) Integer size) {
+        return service.searchByText(text, PaginationMapper.toPageable(from, size));
 
     }
 
     @GetMapping("/{id}")
-    public Item getById(@PathVariable long id,
-                        @RequestHeader(required = false, name = USER_ID_HEADER) Long userId) {
+    public ItemDto getById(@PathVariable long id,
+                           @RequestHeader(required = false, name = USER_ID_HEADER) Long userId) {
         return service.getById(id, userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Item create(@RequestHeader(required = false, name = USER_ID_HEADER) Long userId,
-                       @Valid @RequestBody CreateItemDto dto) {
+    public ItemDto create(@RequestHeader(required = false, name = USER_ID_HEADER) Long userId,
+                          @Valid @RequestBody CreateItemDto dto) {
         return service.create(userId, dto);
     }
 
     @PatchMapping("/{id}")
-    public Item update(
+    public ItemDto update(
             @PathVariable long id, @RequestHeader(required = false, name = USER_ID_HEADER) Long userId,
             @Valid @RequestBody UpdateItemDto dto
     ) {
@@ -58,7 +64,7 @@ public class ItemController {
     }
 
     @DeleteMapping("/{id}")
-    public Item delete(@PathVariable long id) {
+    public ItemDto delete(@PathVariable long id) {
         return service.delete(id);
     }
 
