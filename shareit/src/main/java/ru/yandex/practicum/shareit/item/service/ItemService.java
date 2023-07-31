@@ -43,43 +43,29 @@ public class ItemService {
 
     public List<Item> getByUserId(Long userId) {
 
-        Map<Long, Comment> commentsByItem = commentRepo
-                .findAllByItem_Owner_Id(userId)
-                .stream()
-                .collect(Collectors.toMap(
-                        Comment::getId, Function.identity()));
+Map<Long, List<Comment>> commentsByItem = commentRepo
+            .findAllByItem_Owner_Id(userId)
+            .stream()
+            .collect(Collectors.groupingBy(
+                    comment -> comment.getItem().getId()));
 
-        Map<Long, Booking> bookingsByItem = bookingRepo
-                .findAllByItemOwnerIdOrderByStartDesc(userId)
-                .stream()
-                .collect(Collectors.toMap(
-                        Booking::getId, Function.identity()));
+Map<Long, List<Booking>> bookingsByItem = bookingRepo
+            .findAllByItemOwnerIdOrderByStartDesc(userId)
+            .stream()
+            .collect(Collectors.groupingBy(
+                    booking -> booking.getItem().getId()));
 
-        List<Item> items = repo.findAllByOwnerId(userId).stream()
-                .peek(item -> {
-                    if (bookingsByItem.containsKey(item.getId())) {
-                        item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(
-                                bookingsByItem.values()
-                                        .stream()
-                                        .filter(b -> b.getItem().getId().equals(item.getId()))
-                                        .collect(Collectors.toList()))
-                        ));
-                        item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(
-                                bookingsByItem.values()
-                                        .stream()
-                                        .filter(b -> b.getItem().getId().equals(item.getId()))
-                                        .collect(Collectors.toList()))
-                        ));
-                    }
-                })
-                .peek(item -> item.setComments(commentsByItem.values()
-                        .stream()
-                        .filter(c -> c.getItem().getId().equals(item.getId()))
-                        .map(commentMapper::toCommentDto)
-                        .collect(Collectors.toList())))
-                .collect(Collectors.toList());
-        System.out.println(items);
-        return items;
+return repo.findAllByOwnerId(userId).stream()
+            .peek(item -> {
+                List<Booking> bookings = bookingsByItem.getOrDefault(item.getId(), Collections.emptyList());
+                item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(bookings)));
+                item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(bookings)));
+            })
+            .peek(item -> item.setComments(commentsByItem.getOrDefault(item.getId(), Collections.emptyList())
+                    .stream()
+                    .map(commentMapper::toCommentDto)
+                    .collect(Collectors.toList())))
+            .collect(Collectors.toList());
     }
 
     public List<Item> searchByText(String text) {
