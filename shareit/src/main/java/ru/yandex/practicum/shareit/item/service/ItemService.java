@@ -48,40 +48,26 @@ public class ItemService {
 
     public List<ItemDto> getByUserId(Long userId, Pageable pageable) {
 
-        Map<Long, Comment> commentsByItem = commentRepo
+        Map<Long, List<Comment>> commentsByItem = commentRepo
                 .findAllByItem_Owner_Id(userId)
                 .stream()
-                .collect(Collectors.toMap(
-                        Comment::getId, Function.identity()));
+                .collect(Collectors.groupingBy(
+                        comment -> comment.getItem().getId()));
 
-        Map<Long, Booking> bookingsByItem = bookingRepo
-                .findAllByItemOwnerIdOrderByStartDesc(userId, pageable)
+        Map<Long, List<Booking>> bookingsByItem = bookingRepo
+                .findAllByItemOwnerIdOrderByStartDesc(userId, Pageable.unpaged())
                 .stream()
-                .collect(Collectors.toMap(
-                        Booking::getId, Function.identity()));
+                .collect(Collectors.groupingBy(
+                        booking -> booking.getItem().getId()));
 
-
-        return repo.findAllByOwnerId(userId, pageable)
-                .stream()
+        return repo.findAllByOwnerId(userId, Pageable.unpaged()).stream()
                 .peek(item -> {
-                    if (bookingsByItem.containsKey(item.getId())) {
-                        item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(
-                                bookingsByItem.values()
-                                        .stream()
-                                        .filter(b -> b.getItem().getId().equals(item.getId()))
-                                        .collect(Collectors.toList()))
-                        ));
-                        item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(
-                                bookingsByItem.values()
-                                        .stream()
-                                        .filter(b -> b.getItem().getId().equals(item.getId()))
-                                        .collect(Collectors.toList()))
-                        ));
-                    }
+                    List<Booking> bookings = bookingsByItem.getOrDefault(item.getId(), Collections.emptyList());
+                    item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(bookings)));
+                    item.setLastBooking(bookingMapper.toShortBookingDto(getLastBooking(bookings)));
                 })
-                .peek(item -> item.setComments(commentsByItem.values()
+                .peek(item -> item.setComments(commentsByItem.getOrDefault(item.getId(), Collections.emptyList())
                         .stream()
-                        .filter(c -> c.getItem().getId().equals(item.getId()))
                         .map(commentMapper::toCommentDto)
                         .collect(Collectors.toList())))
                 .map(mapper::toItemDto)

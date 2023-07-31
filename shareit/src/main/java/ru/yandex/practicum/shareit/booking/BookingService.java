@@ -108,8 +108,10 @@ public class BookingService {
         List<Booking> bookings = itemService.getAllBookings(item.getId());
         if (!bookings.isEmpty()) {
             boolean isNotIntersection = bookings.stream()
-                    .anyMatch(b -> booking.getStart().isBefore(b.getEnd()) ||
-                            booking.getEnd().isAfter(b.getStart()));
+                    .allMatch(b -> (booking.getStart().isBefore(b.getStart()) &&
+                            booking.getEnd().isBefore(b.getStart())) ||
+                            (booking.getStart().isAfter(b.getEnd()) &&
+                                    booking.getEnd().isAfter(b.getEnd())));
 
             if (!isNotIntersection) {
                 throw new FieldValidationException("start | end", "Item already booked on these dates");
