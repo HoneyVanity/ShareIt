@@ -54,12 +54,12 @@ public class ItemService {
                         comment -> comment.getItem().getId()));
 
         Map<Long, List<Booking>> bookingsByItem = bookingRepo
-                .findAllByItemOwnerIdOrderByStartDesc(userId, Pageable.unpaged())
+                .findAllByItemOwnerIdOrderByStartDesc(userId, pageable)
                 .stream()
                 .collect(Collectors.groupingBy(
                         booking -> booking.getItem().getId()));
 
-        return repo.findAllByOwnerId(userId, Pageable.unpaged()).stream()
+        return repo.findAllByOwnerId(userId, pageable).stream()
                 .peek(item -> {
                     List<Booking> bookings = bookingsByItem.getOrDefault(item.getId(), Collections.emptyList());
                     item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(bookings)));
