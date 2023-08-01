@@ -59,7 +59,7 @@ public class ItemService {
                 .collect(Collectors.groupingBy(
                         booking -> booking.getItem().getId()));
 
-        return repo.findAllByOwnerId(userId, pageable).stream()
+        return repo.findAllByOwnerId(userId, Pageable.unpaged()).stream()
                 .peek(item -> {
                     List<Booking> bookings = bookingsByItem.getOrDefault(item.getId(), Collections.emptyList());
                     item.setNextBooking(bookingMapper.toShortBookingDto(getNextBooking(bookings)));
