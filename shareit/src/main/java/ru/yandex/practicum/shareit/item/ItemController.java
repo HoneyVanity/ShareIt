@@ -6,19 +6,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.shareit.comment.dto.CommentDto;
+import ru.yandex.practicum.shareit.comment.dto.CreateCommentDto;
+import ru.yandex.practicum.shareit.core.pagination.PaginationMapper;
+import ru.yandex.practicum.shareit.item.dto.CreateItemDto;
 import ru.yandex.practicum.shareit.item.dto.ItemDto;
+import ru.yandex.practicum.shareit.item.dto.UpdateItemDto;
 import ru.yandex.practicum.shareit.item.service.ItemService;
 
+import javax.validation.Valid;
 import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
@@ -29,39 +26,56 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ItemController {
     private final static String USER_ID_HEADER = "X-Sharer-User-Id";
-    ItemService itemService;
+    ItemService service;
 
     @GetMapping
-    public List<ItemDto> getByUserId(
-            @PositiveOrZero @RequestHeader(required = false, name = USER_ID_HEADER) Long userId) {
-        return itemService.searchByOwnerId(userId);
+    public List<ItemDto> getByUserId(@RequestHeader(required = true, name = USER_ID_HEADER) Long userId,
+                                     @PositiveOrZero @RequestParam(required = false) Integer from,
+                                     @PositiveOrZero @RequestParam(required = false) Integer size) {
+        return service.getByUserId(userId, PaginationMapper.toPageable(from, size));
     }
 
     @GetMapping("/search")
     public List<ItemDto> search(
-            @RequestParam(required = false) String text) {
-        return itemService.searchByText(text);
+            @RequestParam(required = false) String text,
+            @PositiveOrZero @RequestParam(required = false) Integer from,
+            @PositiveOrZero @RequestParam(required = false) Integer size) {
+        return service.searchByText(text, PaginationMapper.toPageable(from, size));
 
     }
 
     @GetMapping("/{id}")
-    public ItemDto getById(@PositiveOrZero @PathVariable long id,
+    public ItemDto getById(@PathVariable long id,
                            @RequestHeader(required = false, name = USER_ID_HEADER) Long userId) {
-        return itemService.getItemById(id, userId);
+        return service.getById(id, userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ItemDto create(@RequestHeader(required = false, name = USER_ID_HEADER) Long userId,
-                          @NonNull @RequestBody ItemDto dto) {
-        return itemService.createItem(userId, dto);
+                          @Valid @RequestBody CreateItemDto dto) {
+        return service.create(userId, dto);
     }
 
     @PatchMapping("/{id}")
     public ItemDto update(
-            @PositiveOrZero @PathVariable long id, @RequestHeader(required = false, name = USER_ID_HEADER) Long userId,
-            @NonNull @RequestBody ItemDto dto
+            @PathVariable long id, @RequestHeader(required = false, name = USER_ID_HEADER) Long userId,
+            @Valid @RequestBody UpdateItemDto dto
     ) {
-        return itemService.updateItem(id, userId, dto);
+        return service.update(id, userId, dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ItemDto delete(@PathVariable long id) {
+        return service.delete(id);
+    }
+
+    @PostMapping("/{id}/comment")
+    public CommentDto comment(
+            @PathVariable long id,
+            @RequestHeader(name = USER_ID_HEADER) long userId,
+            @Valid @RequestBody CreateCommentDto dto
+    ) {
+        return service.comment(id, userId, dto);
     }
 }
