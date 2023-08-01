@@ -1,8 +1,10 @@
 package ru.yandex.practicum.shareit.booking;
 
 import lombok.AccessLevel;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,9 +18,11 @@ import ru.yandex.practicum.shareit.booking.dto.BookingDto;
 import ru.yandex.practicum.shareit.core.pagination.PaginationMapper;
 
 import javax.validation.Valid;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping(path = "/bookings")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -30,8 +34,8 @@ public class BookingController {
     public List<Booking> getAllByBooker(
             @RequestHeader(name = USER_ID_HEADER) long bookerId,
             @RequestParam(defaultValue = "ALL") String state,
-            @RequestParam(required = false) Integer from,
-            @RequestParam(required = false) Integer size
+            @PositiveOrZero @RequestParam(required = false) Integer from,
+            @PositiveOrZero @RequestParam(required = false) Integer size
     ) {
         return bookingService.getAllByBooker(bookerId, state, PaginationMapper.toPageable(from, size));
     }
@@ -40,8 +44,8 @@ public class BookingController {
     public List<Booking> getAllByOwner(
             @RequestHeader(name = USER_ID_HEADER) long ownerId,
             @RequestParam(defaultValue = "ALL") String state,
-            @RequestParam(required = false) Integer from,
-            @RequestParam(required = false) Integer size
+            @PositiveOrZero @RequestParam(required = false) Integer from,
+            @PositiveOrZero @RequestParam(required = false) Integer size
     ) {
         return bookingService.getAllByOwner(ownerId, state, PaginationMapper.toPageable(from, size));
     }

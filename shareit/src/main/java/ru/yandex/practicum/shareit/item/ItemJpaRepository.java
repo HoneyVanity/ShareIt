@@ -18,4 +18,10 @@ public interface ItemJpaRepository extends JpaRepository<Item, Long> {
     List<Item> findAllByText(String text, Pageable pageable);
 
     List<Item> findAllByRequestId(long requestId);
+
+    @Query("select i " +
+            "from Item i " +
+            "where i.request.id is not null "
+    )
+    List<Item> findAllWithRequestId();
 }

@@ -10,9 +10,7 @@ public interface CommentJpaRepository extends JpaRepository<Comment, Long> {
 
     @Query("select c " +
             "from Comment c " +
-            "inner join c.item i " +
-            "inner join i.owner o " +
-            "where o.id = :userId "
+            "where c.item.owner.id = :userId "
     )
     List<Comment> findAllByItem_Owner_Id(long userId);
 }

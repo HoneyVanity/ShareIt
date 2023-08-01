@@ -7,7 +7,9 @@ import ru.yandex.practicum.shareit.user.User;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Table
 @Entity
 @Builder

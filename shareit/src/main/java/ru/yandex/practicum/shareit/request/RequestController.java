@@ -1,5 +1,7 @@
 package ru.yandex.practicum.shareit.request;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,9 +16,11 @@ import ru.yandex.practicum.shareit.request.dto.RequestDto;
 import ru.yandex.practicum.shareit.request.service.RequestService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping("/requests")
 public class RequestController {
@@ -39,8 +43,8 @@ public class RequestController {
     @GetMapping("/all")
     public List<RequestDto> getOtherRequests(
             @RequestHeader(name = USER_ID_HEADER) long userId,
-            @RequestParam(required = false) Integer from,
-            @RequestParam(required = false) Integer size
+            @PositiveOrZero @RequestParam(required = false) Integer from,
+            @PositiveOrZero @RequestParam(required = false) Integer size
     ) {
         return requestService.getOtherRequests(userId, PaginationMapper.toPageable(from, size));
     }

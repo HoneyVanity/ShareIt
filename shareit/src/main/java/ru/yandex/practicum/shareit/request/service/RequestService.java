@@ -1,4 +1,5 @@
 package ru.yandex.practicum.shareit.request.service;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,9 @@ import ru.yandex.practicum.shareit.user.User;
 import ru.yandex.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,37 +26,46 @@ import java.util.stream.Collectors;
 public class RequestService {
     private final RequestMapper mapper;
     private final RequestJpaRepository repo;
-    private final ItemJpaRepository itemRepository;
+    private final ItemJpaRepository itemRepo;
     private final ItemMapper itemMapper;
     private final UserService userService;
 
     public RequestDto createRequest(CreateRequestDto dto, long userId) {
         User user = userService.getById(userId);
 
-        Request request = mapper.createRequestDtoToRequest(dto);
+        Request request = mapper.toRequest(dto);
         request.setUser(user);
         request.setCreated(LocalDateTime.now());
         request = repo.save(request);
 
-        return mapper.requestToRequestDto(request);
+        return mapper.toRequestDto(request);
     }
 
     public List<RequestDto> getOwnRequests(long userId) {
         userService.getById(userId);
 
-        return repo.findAllByUserIdOrderByCreatedDesc(userId)
+        List<RequestDto> requestsList = repo.findAllByUserIdOrderByCreatedDesc(userId)
                 .stream()
-                .map(this::toRequestDto)
+                .map(mapper::toRequestDto)
                 .collect(Collectors.toList());
+        if (!requestsList.isEmpty()) {
+            requestsList = setItemCollectionForRequestsList(requestsList);
+        }
+        return requestsList;
+
     }
 
     public List<RequestDto> getOtherRequests(long userId, Pageable pageable) {
         userService.getById(userId);
 
-        return repo.findAllByUserIdIsNotOrderByCreatedDesc(userId, pageable)
+        List<RequestDto> requestsList = repo.findAllByUserIdIsNotOrderByCreatedDesc(userId, pageable)
                 .stream()
-                .map(this::toRequestDto)
+                .map(mapper::toRequestDto)
                 .collect(Collectors.toList());
+        if (!requestsList.isEmpty()) {
+            requestsList = setItemCollectionForRequestsList(requestsList);
+        }
+        return requestsList;
     }
 
     public RequestDto getById(long requestId, long userId) {
@@ -63,12 +75,13 @@ public class RequestService {
                 .findById(requestId)
                 .orElseThrow(() -> new NotFoundException("request", requestId));
 
-        return toRequestDto(request);
+        return makeOneRequestDtoWithItemCollection(request);
     }
 
-    private RequestDto toRequestDto(Request request) {
-        RequestDto requestDto = mapper.requestToRequestDto(request);
-        List<ItemDto> items = itemRepository
+    private RequestDto makeOneRequestDtoWithItemCollection(Request request) {
+        RequestDto requestDto = mapper.toRequestDto(request);
+
+        List<ItemDto> items = itemRepo
                 .findAllByRequestId(request.getId())
                 .stream()
                 .map(itemMapper::toItemDto)
@@ -76,5 +89,18 @@ public class RequestService {
         requestDto.setItems(items);
 
         return requestDto;
+    }
+
+    private List<RequestDto> setItemCollectionForRequestsList(List<RequestDto> requestDtoList) {
+        Map<Long, List<ItemDto>> items = itemRepo
+                .findAllWithRequestId()
+                .stream()
+                .map(itemMapper::toItemDto)
+                .collect(Collectors.groupingBy(
+                        ItemDto::getRequestId));
+        return requestDtoList.stream()
+                .peek(requestDto -> requestDto.setItems(
+                        items.getOrDefault(requestDto.getId(), Collections.emptyList())))
+                .collect(Collectors.toList());
     }
 }

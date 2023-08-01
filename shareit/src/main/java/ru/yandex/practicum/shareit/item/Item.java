@@ -10,7 +10,9 @@ import ru.yandex.practicum.shareit.user.User;
 import javax.persistence.*;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Table
 @Entity
 @Builder

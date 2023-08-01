@@ -1,15 +1,15 @@
 package ru.yandex.practicum.shareit.request.dto;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import ru.yandex.practicum.shareit.item.dto.ItemDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 @Builder
 public class RequestDto {
     private Long id;

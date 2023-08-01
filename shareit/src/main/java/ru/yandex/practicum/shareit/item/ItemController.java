@@ -1,6 +1,7 @@
 package ru.yandex.practicum.shareit.item;
 
 import lombok.AccessLevel;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import ru.yandex.practicum.shareit.item.dto.UpdateItemDto;
 import ru.yandex.practicum.shareit.item.service.ItemService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -28,16 +30,16 @@ public class ItemController {
 
     @GetMapping
     public List<ItemDto> getByUserId(@RequestHeader(required = true, name = USER_ID_HEADER) Long userId,
-                                     @RequestParam(required = false) Integer from,
-                                     @RequestParam(required = false) Integer size) {
+                                     @PositiveOrZero @RequestParam(required = false) Integer from,
+                                     @PositiveOrZero @RequestParam(required = false) Integer size) {
         return service.getByUserId(userId, PaginationMapper.toPageable(from, size));
     }
 
     @GetMapping("/search")
     public List<ItemDto> search(
             @RequestParam(required = false) String text,
-            @RequestParam(required = false) Integer from,
-            @RequestParam(required = false) Integer size) {
+            @PositiveOrZero @RequestParam(required = false) Integer from,
+            @PositiveOrZero @RequestParam(required = false) Integer size) {
         return service.searchByText(text, PaginationMapper.toPageable(from, size));
 
     }

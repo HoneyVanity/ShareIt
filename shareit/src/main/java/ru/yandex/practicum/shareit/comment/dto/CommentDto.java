@@ -1,12 +1,14 @@
 package ru.yandex.practicum.shareit.comment.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import net.bytebuddy.implementation.bind.annotation.BindingPriority;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 @Builder
 public class CommentDto {
     private long id;

@@ -8,7 +8,8 @@ import ru.yandex.practicum.shareit.user.User;
 
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemDto {

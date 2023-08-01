@@ -7,7 +7,9 @@ import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.PositiveOrZero;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Builder
 @Entity
 @Table(name = "users")

@@ -6,7 +6,7 @@ import ru.yandex.practicum.shareit.request.dto.RequestDto;
 
 @Mapper(componentModel = "spring")
 public interface RequestMapper {
-    Request createRequestDtoToRequest(CreateRequestDto dto);
+    Request toRequest(CreateRequestDto dto);
 
-    RequestDto requestToRequestDto(Request request);
+    RequestDto toRequestDto(Request request);
 }
